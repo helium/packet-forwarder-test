@@ -10,6 +10,6 @@ keywords = ["semtech", "lora", "helium"]
 license = "Apache-2.0"
 
 [dependencies]
-serde = { version = "*", features = ["derive"]}
-serde_json = "*"
+serde = { version = "1", features = ["derive"]}
+serde_json = "1"
 structopt = "0.3"
