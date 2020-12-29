@@ -38,13 +38,17 @@ impl Config {
             // remove whitespace
             let line = line_result?.replace(' ', "");
 
-            // only add to contents for json parsing
-            // if it's not a comment line
-            if !line.starts_with('/') {
-                contents.push_str(&line);
-                contents.push('\n');
+            // remove any comments
+            // this logic works for whole line of end of line
+            for s in line.split("/*") {
+                if !s.ends_with("*/") {
+                    contents.push_str(&s);
+                    contents.push('\n');
+                }
             }
         }
+
+        //println!("{}", contents);
         let config = serde_json::from_str(&contents)?;
         Ok(config)
     }
