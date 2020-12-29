@@ -4,6 +4,11 @@ version = "0.1.0"
 authors = ["Louis Thiery <thiery.louis@gmail.com>"]
 edition = "2018"
 
+description = "A utility for verifying SX13xx Configuration Files"
+readme = "README.md"
+keywords = ["semtech", "lora", "helium"]
+license = "Apache-2.0"
+
 [dependencies]
 serde = { version = "*", features = ["derive"]}
 serde_json = "*"
