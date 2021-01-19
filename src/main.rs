@@ -13,16 +13,27 @@ pub struct Opt {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let path = Opt::from_args().path;
-    println!("{}", path);
+    let opts = Opt::from_args();
+    let path = Path::new(&opts.path);
 
-    if !Path::new(&path).exists() {
-        panic!("No {} found", path);
+    if !path.exists() {
+        panic!("Path {} does not exist", &opts.path);
     }
 
-    let file = File::open(&path)?;
-    let config = Config::from_file(file)?;
-    println!("{}", config.summary());
+    if path.is_file() {
+        let file = File::open(&path)?;
+        let config = Config::from_file(file)?;
+        println!("{}", config.summary());
+    } else if path.is_dir() {
+        for entry in path.read_dir().expect("read_dir call failed") {
+            if let Ok(entry) = entry {
+                let file = File::open(&entry.path())?;
+                println!("{:?}", file);
+                let config = Config::from_file(file)?;
+                println!("{}", config.summary());
+            }
+        }
+    }
 
     Ok(())
 }

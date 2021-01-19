@@ -76,14 +76,30 @@ impl Sx130xConfData {
         // We will confirm that all "listened to" frequencies can also be transmitted on
         // since that is a requirement for POC
         let mut frequencies = Vec::new();
-        frequencies.push(self.chan_multiSF_0.frequency(&self.radio_0, &self.radio_1));
-        frequencies.push(self.chan_multiSF_1.frequency(&self.radio_0, &self.radio_1));
-        frequencies.push(self.chan_multiSF_2.frequency(&self.radio_0, &self.radio_1));
-        frequencies.push(self.chan_multiSF_3.frequency(&self.radio_0, &self.radio_1));
-        frequencies.push(self.chan_multiSF_4.frequency(&self.radio_0, &self.radio_1));
-        frequencies.push(self.chan_multiSF_5.frequency(&self.radio_0, &self.radio_1));
-        frequencies.push(self.chan_multiSF_6.frequency(&self.radio_0, &self.radio_1));
-        frequencies.push(self.chan_multiSF_7.frequency(&self.radio_0, &self.radio_1));
+        if let Some(frequency) = self.chan_multiSF_0.frequency(&self.radio_0, &self.radio_1) {
+            frequencies.push(frequency);
+        }
+        if let Some(frequency) = self.chan_multiSF_1.frequency(&self.radio_0, &self.radio_1) {
+            frequencies.push(frequency);
+        }
+        if let Some(frequency) = self.chan_multiSF_2.frequency(&self.radio_0, &self.radio_1) {
+            frequencies.push(frequency);
+        }
+        if let Some(frequency) = self.chan_multiSF_3.frequency(&self.radio_0, &self.radio_1) {
+            frequencies.push(frequency);
+        }
+        if let Some(frequency) = self.chan_multiSF_4.frequency(&self.radio_0, &self.radio_1) {
+            frequencies.push(frequency);
+        }
+        if let Some(frequency) = self.chan_multiSF_5.frequency(&self.radio_0, &self.radio_1) {
+            frequencies.push(frequency);
+        }
+        if let Some(frequency) = self.chan_multiSF_6.frequency(&self.radio_0, &self.radio_1) {
+            frequencies.push(frequency);
+        }
+        if let Some(frequency) = self.chan_multiSF_7.frequency(&self.radio_0, &self.radio_1) {
+            frequencies.push(frequency);
+        }
 
         // iterate through all frequencies and confirm that they are between
         // tx_freq_min and tx_freq_max
@@ -135,43 +151,68 @@ struct Radio {
 #[derive(Deserialize, Serialize, Debug)]
 struct Channel {
     enable: bool,
-    r#if: isize,
-    radio: usize,
+    r#if: Option<isize>,
+    radio: Option<usize>,
 }
 
 impl Channel {
-    fn frequency(&self, radio_0: &Radio, radio_1: &Radio) -> isize {
-        match self.radio {
-            0 => radio_0.freq + self.r#if,
-            1 => radio_1.freq + self.r#if,
-            _ => panic!("invalid radio!"),
+    fn frequency(&self, radio_0: &Radio, radio_1: &Radio) -> Option<isize> {
+        match self.enable {
+            true => {
+                if let (Some(radio), Some(freq)) = (self.radio, self.r#if) {
+                    Some(match radio {
+                        0 => radio_0.freq + freq,
+                        1 => radio_1.freq + freq,
+                        _ => panic!("invalid radio!"),
+                    })
+                } else {
+                    panic!("LoraStd enabled but no 'radio' and/or no 'if'")
+                }
+            }
+            false => None,
         }
     }
 
     fn summary(&self, radio_0: &Radio, radio_1: &Radio) -> String {
-        let frequency = self.frequency(radio_0, radio_1);
-        format!("{} MHz", frequency as f64 / 1_000_000.0)
+        if let Some(frequency) = self.frequency(radio_0, radio_1) {
+            format!("{} MHz", frequency as f64 / 1_000_000.0)
+        } else {
+            "Disabled".to_string()
+        }
     }
 }
 
 impl LoraStd {
-    fn frequency(&self, radio_0: &Radio, radio_1: &Radio) -> isize {
-        match self.radio {
-            0 => radio_0.freq + self.r#if,
-            1 => radio_1.freq + self.r#if,
-            _ => panic!("invalid radio!"),
+    fn frequency(&self, radio_0: &Radio, radio_1: &Radio) -> Option<isize> {
+        match self.enable {
+            true => {
+                if let (Some(radio), Some(freq)) = (self.radio, self.r#if) {
+                    Some(match radio {
+                        0 => radio_0.freq + freq,
+                        1 => radio_1.freq + freq,
+                        _ => panic!("invalid radio!"),
+                    })
+                } else {
+                    panic!("LoraStd enabled but no 'radio' and/or no 'if'")
+                }
+            }
+            false => None,
         }
     }
 
     fn summary(&self, radio_0: &Radio, radio_1: &Radio) -> String {
-        let frequency = self.frequency(radio_0, radio_1);
-        format!("{} MHz", frequency as f64 / 1_000_000.0)
+        if let Some(frequency) = self.frequency(radio_0, radio_1) {
+            format!("{} MHz", frequency as f64 / 1_000_000.0)
+        } else {
+            "Disabled".to_string()
+        }
     }
 }
 
 #[derive(Deserialize, Serialize, Debug)]
 struct LoraStd {
-    bandwidth: usize,
-    r#if: isize,
-    radio: usize,
+    enable: bool,
+    bandwidth: Option<usize>,
+    r#if: Option<isize>,
+    radio: Option<usize>,
 }
