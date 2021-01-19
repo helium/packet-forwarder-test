@@ -68,7 +68,7 @@ struct Sx130xConfData {
     chan_multiSF_6: Channel,
     chan_multiSF_7: Channel,
     chan_Lora_std: LoraStd,
-    chan_FSK: Channel,
+    chan_FSK: ChannelFSK,
 }
 
 impl Sx130xConfData {
@@ -116,24 +116,26 @@ impl Sx130xConfData {
 
         // prepare the summary to be printed
         let mut summary = String::new();
-        summary.push_str("1: ");
+        summary.push_str("1        ");
         summary.push_str(&self.chan_multiSF_0.summary(&self.radio_0, &self.radio_1));
-        summary.push_str("\n2: ");
+        summary.push_str("\n2        ");
         summary.push_str(&self.chan_multiSF_1.summary(&self.radio_0, &self.radio_1));
-        summary.push_str("\n3: ");
+        summary.push_str("\n3        ");
         summary.push_str(&self.chan_multiSF_2.summary(&self.radio_0, &self.radio_1));
-        summary.push_str("\n4: ");
+        summary.push_str("\n4        ");
         summary.push_str(&self.chan_multiSF_3.summary(&self.radio_0, &self.radio_1));
-        summary.push_str("\n5: ");
+        summary.push_str("\n5        ");
         summary.push_str(&self.chan_multiSF_4.summary(&self.radio_0, &self.radio_1));
-        summary.push_str("\n6: ");
+        summary.push_str("\n6        ");
         summary.push_str(&self.chan_multiSF_5.summary(&self.radio_0, &self.radio_1));
-        summary.push_str("\n7: ");
+        summary.push_str("\n7        ");
         summary.push_str(&self.chan_multiSF_6.summary(&self.radio_0, &self.radio_1));
-        summary.push_str("\n8: ");
+        summary.push_str("\n8        ");
         summary.push_str(&self.chan_multiSF_7.summary(&self.radio_0, &self.radio_1));
-        summary.push_str("\n9: ");
+        summary.push_str("\nFat LoRa ");
         summary.push_str(&self.chan_Lora_std.summary(&self.radio_0, &self.radio_1));
+        summary.push_str("\nFSK      ");
+        summary.push_str(&self.chan_FSK.summary(&self.radio_0, &self.radio_1));
         if !valid_tx {
             summary.push_str("\nWARNING: Cannot transmit on all uplink frequencies for POC!");
         }
@@ -151,22 +153,28 @@ struct Radio {
 #[derive(Deserialize, Serialize, Debug)]
 struct Channel {
     enable: bool,
-    r#if: Option<isize>,
-    radio: Option<usize>,
+    #[serde(flatten)]
+    config: Option<ChannelEnabled>,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+struct ChannelEnabled {
+    r#if: isize,
+    radio: usize,
 }
 
 impl Channel {
     fn frequency(&self, radio_0: &Radio, radio_1: &Radio) -> Option<isize> {
         match self.enable {
             true => {
-                if let (Some(radio), Some(freq)) = (self.radio, self.r#if) {
-                    Some(match radio {
-                        0 => radio_0.freq + freq,
-                        1 => radio_1.freq + freq,
+                if let Some(config) = &self.config {
+                    Some(match config.radio {
+                        0 => radio_0.freq + config.r#if,
+                        1 => radio_1.freq + config.r#if,
                         _ => panic!("invalid radio!"),
                     })
                 } else {
-                    panic!("LoraStd enabled but no 'radio' and/or no 'if'")
+                    panic!("LoRa Channel enabled but no 'radio' and/or no 'if'")
                 }
             }
             false => None,
@@ -186,10 +194,10 @@ impl LoraStd {
     fn frequency(&self, radio_0: &Radio, radio_1: &Radio) -> Option<isize> {
         match self.enable {
             true => {
-                if let (Some(radio), Some(freq)) = (self.radio, self.r#if) {
-                    Some(match radio {
-                        0 => radio_0.freq + freq,
-                        1 => radio_1.freq + freq,
+                if let Some(config) = &self.config {
+                    Some(match config.radio {
+                        0 => radio_0.freq + config.r#if,
+                        1 => radio_1.freq + config.r#if,
                         _ => panic!("invalid radio!"),
                     })
                 } else {
@@ -200,9 +208,22 @@ impl LoraStd {
         }
     }
 
+    fn bandwidth(&self) -> Option<usize> {
+        match self.enable {
+            true => {
+                if let Some(config) = &self.config {
+                    Some(config.bandwidth)
+                } else {
+                    panic!("LoraStd enabled but no 'bandwidth'")
+                }
+            }
+            false => None,
+        }
+    }
+
     fn summary(&self, radio_0: &Radio, radio_1: &Radio) -> String {
-        if let Some(frequency) = self.frequency(radio_0, radio_1) {
-            format!("{} MHz", frequency as f64 / 1_000_000.0)
+        if let (Some(frequency), Some(bandwidth)) = (self.frequency(radio_0, radio_1), self.bandwidth()) {
+            format!("{} MHz, BW {} KHz", frequency as f64 / 1_000_000.0, bandwidth as f64/1_000.0)
         } else {
             "Disabled".to_string()
         }
@@ -212,7 +233,60 @@ impl LoraStd {
 #[derive(Deserialize, Serialize, Debug)]
 struct LoraStd {
     enable: bool,
-    bandwidth: Option<usize>,
-    r#if: Option<isize>,
-    radio: Option<usize>,
+    #[serde(flatten)]
+    config: Option<LoraStdEnabled>,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+struct LoraStdEnabled {
+    bandwidth: usize,
+    r#if: isize,
+    radio: usize,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+struct ChannelFSK {
+    enable: bool,
+    #[serde(flatten)]
+    config: Option<LoraStdEnabled>,
+}
+
+impl ChannelFSK {
+    fn frequency(&self, radio_0: &Radio, radio_1: &Radio) -> Option<isize> {
+        match self.enable {
+            true => {
+                if let Some(config) = &self.config {
+                    Some(match config.radio {
+                        0 => radio_0.freq + config.r#if,
+                        1 => radio_1.freq + config.r#if,
+                        _ => panic!("invalid radio!"),
+                    })
+                } else {
+                    panic!("LoraStd enabled but no 'radio' and/or no 'if'")
+                }
+            }
+            false => None,
+        }
+    }
+
+    fn bandwidth(&self) -> Option<usize> {
+        match self.enable {
+            true => {
+                if let Some(config) = &self.config {
+                    Some(config.bandwidth)
+                } else {
+                    panic!("ChannelFSK enabled but no 'bandwidth'")
+                }
+            }
+            false => None,
+        }
+    }
+
+    fn summary(&self, radio_0: &Radio, radio_1: &Radio) -> String {
+        if let (Some(frequency), Some(bandwidth)) = (self.frequency(radio_0, radio_1), self.bandwidth()) {
+            format!("{} MHz, BW {} KHz", frequency as f64 / 1_000_000.0, bandwidth as f64/1_000.0)
+        } else {
+            "Disabled".to_string()
+        }
+    }
 }
