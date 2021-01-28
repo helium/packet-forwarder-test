@@ -27,6 +27,13 @@ impl Config {
         }
     }
 
+    pub fn frequency(&self, channel: usize) -> Option<isize> {
+        match &self.config {
+            Sx130xConf::SX1301_conf(sx1301) => sx1301.frequency(channel),
+            Sx130xConf::SX130x_conf(sx1302) => sx1302.frequency(channel),
+        }
+    }
+
     // it is common for these JSON files to have comments in them
     // which shouldn't normally happen
     // so this helper function "cleans it up" before feeding it to serde_json
@@ -72,6 +79,22 @@ struct Sx130xConfData {
 }
 
 impl Sx130xConfData {
+    fn frequency(&self, channel: usize) -> Option<isize> {
+        match channel {
+            0 => self.chan_multiSF_0.frequency(&self.radio_0, &self.radio_1),
+            1 => self.chan_multiSF_1.frequency(&self.radio_0, &self.radio_1),
+            2 => self.chan_multiSF_2.frequency(&self.radio_0, &self.radio_1),
+            3 => self.chan_multiSF_3.frequency(&self.radio_0, &self.radio_1),
+            4 => self.chan_multiSF_4.frequency(&self.radio_0, &self.radio_1),
+            5 => self.chan_multiSF_5.frequency(&self.radio_0, &self.radio_1),
+            6 => self.chan_multiSF_6.frequency(&self.radio_0, &self.radio_1),
+            7 => self.chan_multiSF_7.frequency(&self.radio_0, &self.radio_1),
+            8 => self.chan_Lora_std.frequency(&self.radio_0, &self.radio_1),
+            9 => self.chan_FSK.frequency(&self.radio_0, &self.radio_1),
+            _ => None,
+        }
+    }
+
     fn summary(&self) -> String {
         // We will confirm that all "listened to" frequencies can also be transmitted on
         // since that is a requirement for POC
@@ -222,8 +245,14 @@ impl LoraStd {
     }
 
     fn summary(&self, radio_0: &Radio, radio_1: &Radio) -> String {
-        if let (Some(frequency), Some(bandwidth)) = (self.frequency(radio_0, radio_1), self.bandwidth()) {
-            format!("{} MHz, BW {} KHz", frequency as f64 / 1_000_000.0, bandwidth as f64/1_000.0)
+        if let (Some(frequency), Some(bandwidth)) =
+            (self.frequency(radio_0, radio_1), self.bandwidth())
+        {
+            format!(
+                "{} MHz, BW {} KHz",
+                frequency as f64 / 1_000_000.0,
+                bandwidth as f64 / 1_000.0
+            )
         } else {
             "Disabled".to_string()
         }
@@ -283,8 +312,14 @@ impl ChannelFSK {
     }
 
     fn summary(&self, radio_0: &Radio, radio_1: &Radio) -> String {
-        if let (Some(frequency), Some(bandwidth)) = (self.frequency(radio_0, radio_1), self.bandwidth()) {
-            format!("{} MHz, BW {} KHz", frequency as f64 / 1_000_000.0, bandwidth as f64/1_000.0)
+        if let (Some(frequency), Some(bandwidth)) =
+            (self.frequency(radio_0, radio_1), self.bandwidth())
+        {
+            format!(
+                "{} MHz, BW {} KHz",
+                frequency as f64 / 1_000_000.0,
+                bandwidth as f64 / 1_000.0
+            )
         } else {
             "Disabled".to_string()
         }
