@@ -28,7 +28,7 @@ pub const EU868_UPLINK_FREQUENCIES: [usize; 9] = [
     868_800_000,
 ];
 
-pub const US915_UPLINK_FREQUENCIES: [usize; 9] = [
+pub const US915_UPLINK_FREQUENCIES: [usize; 8] = [
     903_900_000,
     904_100_000,
     904_300_000,
@@ -37,7 +37,6 @@ pub const US915_UPLINK_FREQUENCIES: [usize; 9] = [
     904_900_000,
     905_100_000,
     905_300_000,
-    904_600_000,
 ];
 
 pub const CN470_UPLINK_FREQUENCIES: [usize; 8] = [

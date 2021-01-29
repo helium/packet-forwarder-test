@@ -1,4 +1,4 @@
-use futures::{join, select};
+use futures::join;
 use regions::Region;
 use semtech_udp::{
     pull_resp,
@@ -8,22 +8,31 @@ use semtech_udp::{
 };
 use std::net::SocketAddr;
 use structopt::StructOpt;
-use tokio::time::{delay_for as sleep, Duration, Instant};
+use tokio::time::{Duration, Instant};
 use tokio::{
     sync::{mpsc, oneshot},
     time::timeout,
 };
 
+#[derive(Debug, Clone, PartialEq)]
+enum Role {
+    Tested,
+    Control,
+}
+
+type Message = (RxPk, MacAddress, Role);
+
 async fn start_server(
+    role: Role,
     port: u16,
-    mut sender: mpsc::Sender<(RxPk, MacAddress)>,
+    mut sender: mpsc::Sender<Message>,
 ) -> Result<(oneshot::Receiver<MacAddress>, ClientTx), Box<dyn std::error::Error>> {
     let test_addr = SocketAddr::from(([0, 0, 0, 0], port));
     println!("Starting server: {}", test_addr);
 
     // Splitting is optional and only useful if you are want to run concurrently
     // the client_rx & client_tx can both be held inside the UdpRuntime struct
-    let (mut test_client_rx, mut test_client_tx) = UdpRuntime::new(test_addr).await?.split();
+    let (mut test_client_rx, test_client_tx) = UdpRuntime::new(test_addr).await?.split();
 
     // prepare a one-shot so that receive can unlocked sending
     let (test_tx, test_rx): (oneshot::Sender<MacAddress>, oneshot::Receiver<MacAddress>) =
@@ -51,7 +60,7 @@ async fn start_server(
                     println!("Mac existed, but IP updated: {}, {}", mac, addr);
                 }
                 Event::PacketReceived(rxpk, addr) => {
-                    sender.send((rxpk, addr)).await.unwrap();
+                    sender.send((rxpk, addr, role.clone())).await.unwrap();
                 }
                 Event::NoClientWithMac(_packet, mac) => {
                     println!("Tried to send to client with unknown MAC: {:?}", mac)
@@ -67,20 +76,19 @@ async fn start_server(
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Opt::from_args();
-    let (packet_tx, mut packet_rx): (
-        mpsc::Sender<(RxPk, MacAddress)>,
-        mpsc::Receiver<(RxPk, MacAddress)>,
-    ) = mpsc::channel(120);
+    let (packet_tx, mut packet_rx): (mpsc::Sender<Message>, mpsc::Receiver<Message>) =
+        mpsc::channel(120);
 
-    let (test_mac, mut test_tx) = start_server(cli.test_port, packet_tx.clone()).await?;
-    let (control_mac, mut control_tx) = start_server(cli.control_port, packet_tx).await?;
+    let (test_mac, mut test_tx) =
+        start_server(Role::Tested, cli.test_port, packet_tx.clone()).await?;
+    let (control_mac, _control_tx) =
+        start_server(Role::Control, cli.control_port, packet_tx).await?;
 
     println!("Blocking until both clients connect");
     let (gateway_mac, control_mac) = join!(test_mac, control_mac);
     let (gateway_mac, control_mac) = (gateway_mac.unwrap(), control_mac.unwrap());
 
     let channels = cli.region.get_uplink_frequencies();
-
     for (index, channel) in channels.iter().enumerate() {
         println!(
             "Dispatching on channel ({:?} {}: {} MHz)",
@@ -89,7 +97,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             channel
         );
         let txpk = create_packet(channel, "SF12BW125");
-        println!("{:?}", txpk);
+
         let prepared_send = test_tx.prepare_downlink(Some(txpk.clone()), gateway_mac);
         if let Err(e) = prepared_send.dispatch(Some(Duration::from_secs(5))).await {
             panic!("Transmit Dispatch threw error: {:?}", e)
@@ -101,22 +109,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let wait_for = Duration::from_secs(10);
         let mut passed = false;
         while Instant::now().duration_since(start) < wait_for && !passed {
-            let (rxpk, mac) = timeout(wait_for, packet_rx.recv())
+            let (rxpk, mac, role) = timeout(wait_for, packet_rx.recv())
                 .await?
                 .expect("Channels should never close");
 
             if mac == control_mac
+                && role == Role::Control
                 && rxpk.get_data() == txpk.data
                 && rxpk.get_datarate() == txpk.datr
-                && (rxpk.get_frequency() - &txpk.freq).abs() < 0.1
+                && (rxpk.get_frequency() - txpk.freq).abs() < 0.1
             {
                 println!("Received expected packet!");
                 passed = true;
             } else {
-                println!("Received garbage packet {:?}", rxpk);
+                println!("Received garbage packet");
             }
         }
     }
+
     Ok(())
 }
 
