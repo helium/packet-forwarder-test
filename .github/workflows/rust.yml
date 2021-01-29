@@ -45,8 +45,8 @@ jobs:
           echo ::set-output name=RF_TESTER_RELEASE::sx13xx-conf-$(echo $GITHUB_REF | cut -d / -f 3)-x86-64-linux
 
       - name: Prepare Release
-        env: |
-          SX13XX_CONF_NAME: ${{ steps.name_release.outputs.SX13XX_CONF_RELEASE }}
+        env:
+          SX13XX_CONF_NAME: ${{ steps.name_release.outputs.SX13XX_CONF_RELEASE }} \
           RF_TESTER_NAME: ${{ steps.name_release.outputs.RF_TESTER_RELEASE }}
         run: |
           strip target/release/sx13xx-conf
@@ -97,7 +97,7 @@ jobs:
           echo ::set-output name=RF_TESTER_RELEASE::sx13xx-conf-$(echo $GITHUB_REF | cut -d / -f 3)-x86-64-macos
 
       - name: Prepare Release
-        env: |
+        env:
           SX13XX_CONF_NAME: ${{ steps.name_release.outputs.SX13XX_CONF_RELEASE }}
           RF_TESTER_NAME: ${{ steps.name_release.outputs.RF_TESTER_RELEASE }}
         run: |
