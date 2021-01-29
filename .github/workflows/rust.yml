@@ -40,19 +40,25 @@ jobs:
       - name: Name Release
         if: startsWith(github.ref, 'refs/tags/')
         id: name_release
-        run: echo ::set-output name=RELEASE::sx13xx-conf-$(echo $GITHUB_REF | cut -d / -f 3)-x86-64-linux
+        run: |
+          echo ::set-output name=SX13XX_CONF_RELEASE::sx13xx-conf-$(echo $GITHUB_REF | cut -d / -f 3)-x86-64-linux
+          echo ::set-output name=RF_TESTER_RELEASE::sx13xx-conf-$(echo $GITHUB_REF | cut -d / -f 3)-x86-64-linux
 
       - name: Prepare Release
-        if: startsWith(github.ref, 'refs/tags/')
-        env:
-          NAME: ${{ steps.name_release.outputs.RELEASE }}
+        env: |
+          SX13XX_CONF_NAME: ${{ steps.name_release.outputs.SX13XX_CONF_RELEASE }}
+          RF_TESTER_NAME: ${{ steps.name_release.outputs.RF_TESTER_RELEASE }}
         run: |
           strip target/release/sx13xx-conf
-          mkdir $NAME
-          mv target/release/sx13xx-conf $NAME/
-          cp README.md $NAME/
-          cp LICENSE $NAME/
-          tar -zcvf $NAME.tar.gz $NAME/
+          mkdir $SX13XX_CONF_NAME
+          mv target/release/sx13xx-conf $SX13XX_CONF_NAME/
+          cp LICENSE $SX13XX_CONF_NAME/
+          tar -zcvf $SX13XX_CONF_NAME.tar.gz $SX13XX_CONF_NAME/
+          strip target/release/rf-tester
+          mkdir $RF_TESTER_NAME
+          mv target/release/rf-test $RF_TESTER_NAME/
+          cp LICENSE $RF_TESTER_NAME/
+          tar -zcvf $RF_TESTER_NAME.tar.gz $RF_TESTER_NAME/
 
       - name: Push Release
         uses: softprops/action-gh-release@v1
@@ -86,19 +92,25 @@ jobs:
       - name: Name Release
         if: startsWith(github.ref, 'refs/tags/')
         id: name_release
-        run: echo ::set-output name=RELEASE::sx13xx-conf-$(echo $GITHUB_REF | cut -d / -f 3)-x86-64-macos
+        run: |
+          echo ::set-output name=SX13XX_CONF_RELEASE::sx13xx-conf-$(echo $GITHUB_REF | cut -d / -f 3)-x86-64-macos
+          echo ::set-output name=RF_TESTER_RELEASE::sx13xx-conf-$(echo $GITHUB_REF | cut -d / -f 3)-x86-64-macos
 
       - name: Prepare Release
-        if: startsWith(github.ref, 'refs/tags/')
-        env:
-          NAME: ${{ steps.name_release.outputs.RELEASE }}
+        env: |
+          SX13XX_CONF_NAME: ${{ steps.name_release.outputs.SX13XX_CONF_RELEASE }}
+          RF_TESTER_NAME: ${{ steps.name_release.outputs.RF_TESTER_RELEASE }}
         run: |
           strip target/release/sx13xx-conf
-          mkdir $NAME
-          mv target/release/sx13xx-conf $NAME/
-          cp README.md $NAME/
-          cp LICENSE $NAME/
-          tar -zcvf $NAME.tar.gz $NAME/
+          mkdir $SX13XX_CONF_NAME
+          mv target/release/sx13xx-conf $SX13XX_CONF_NAME/
+          cp LICENSE $SX13XX_CONF_NAME/
+          tar -zcvf $SX13XX_CONF_NAME.tar.gz $SX13XX_CONF_NAME/
+          strip target/release/rf-tester
+          mkdir $RF_TESTER_NAME
+          mv target/release/rf-test $RF_TESTER_NAME/
+          cp LICENSE $RF_TESTER_NAME/
+          tar -zcvf $RF_TESTER_NAME.tar.gz $RF_TESTER_NAME/
 
       - name: Push Release
         uses: softprops/action-gh-release@v1

@@ -81,52 +81,84 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let (test_mac, mut test_tx) =
         start_server(Role::Tested, cli.test_port, packet_tx.clone()).await?;
-    let (control_mac, _control_tx) =
+    let (control_mac, mut control_tx) =
         start_server(Role::Control, cli.control_port, packet_tx).await?;
 
     println!("Blocking until both clients connect");
-    let (gateway_mac, control_mac) = join!(test_mac, control_mac);
-    let (gateway_mac, control_mac) = (gateway_mac.unwrap(), control_mac.unwrap());
+    let (test_mac, control_mac) = join!(test_mac, control_mac);
+    let (test_mac, control_mac) = (test_mac.unwrap(), control_mac.unwrap());
 
-    let channels = cli.region.get_uplink_frequencies();
+    println!("Testing ability of Test Gateway to Transmit on Uplink Channels");
+    run_test(
+        Role::Control,
+        &cli.region,
+        &mut test_tx,
+        &mut packet_rx,
+        &test_mac,
+        &control_mac,
+    )
+    .await?;
+    println!("Testing ability of Test Gateway to Receive on Uplink Channels");
+    run_test(
+        Role::Tested,
+        &cli.region,
+        &mut control_tx,
+        &mut packet_rx,
+        &control_mac,
+        &test_mac,
+    )
+    .await?;
+
+    Ok(())
+}
+
+async fn run_test(
+    receiver_role: Role,
+    region: &Region,
+    test_tx: &mut ClientTx,
+    receiver: &mut mpsc::Receiver<Message>,
+    test_mac: &MacAddress,
+    control_mac: &MacAddress,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let channels = region.get_uplink_frequencies();
+
     for (index, channel) in channels.iter().enumerate() {
         println!(
-            "Dispatching on channel ({:?} {}: {} MHz)",
-            cli.region,
+            "\tDispatching on channel ({:?} {}: {} MHz)",
+            region,
             index + 1,
             channel
         );
         let txpk = create_packet(channel, "SF12BW125");
 
-        let prepared_send = test_tx.prepare_downlink(Some(txpk.clone()), gateway_mac);
+        let prepared_send = test_tx.prepare_downlink(Some(txpk.clone()), *test_mac);
         if let Err(e) = prepared_send.dispatch(Some(Duration::from_secs(5))).await {
             panic!("Transmit Dispatch threw error: {:?}", e)
-        } else {
-            println!("Send complete");
         }
 
         let start = Instant::now();
         let wait_for = Duration::from_secs(10);
         let mut passed = false;
         while Instant::now().duration_since(start) < wait_for && !passed {
-            let (rxpk, mac, role) = timeout(wait_for, packet_rx.recv())
+            let (rxpk, mac, role) = timeout(wait_for, receiver.recv())
                 .await?
                 .expect("Channels should never close");
 
-            if mac == control_mac
-                && role == Role::Control
+            if mac == *control_mac
+                && role == receiver_role
                 && rxpk.get_data() == txpk.data
                 && rxpk.get_datarate() == txpk.datr
                 && (rxpk.get_frequency() - txpk.freq).abs() < 0.1
             {
-                println!("Received expected packet!");
+                println!(
+                    "\tReceived expected packet! RSSI = {}, SNR = {}",
+                    rxpk.get_rssi(),
+                    rxpk.get_snr()
+                );
                 passed = true;
-            } else {
-                println!("Received garbage packet");
             }
         }
     }
-
     Ok(())
 }
 
