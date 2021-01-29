@@ -54,7 +54,7 @@ jobs:
           tar -zcvf $SX13XX_CONF_NAME.tar.gz $SX13XX_CONF_NAME/
           strip target/release/rf-tester
           mkdir $RF_TESTER_NAME
-          mv target/release/rf-test $RF_TESTER_NAME/
+          mv target/release/rf-tester $RF_TESTER_NAME/
           cp LICENSE $RF_TESTER_NAME/
           tar -zcvf $RF_TESTER_NAME.tar.gz $RF_TESTER_NAME/
 
@@ -104,7 +104,7 @@ jobs:
           tar -zcvf $SX13XX_CONF_NAME.tar.gz $SX13XX_CONF_NAME/
           strip target/release/rf-tester
           mkdir $RF_TESTER_NAME
-          mv target/release/rf-test $RF_TESTER_NAME/
+          mv target/release/rf-tester $RF_TESTER_NAME/
           cp LICENSE $RF_TESTER_NAME/
           tar -zcvf $RF_TESTER_NAME.tar.gz $RF_TESTER_NAME/
 
