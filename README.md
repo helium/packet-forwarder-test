@@ -1,5 +1,8 @@
-# sx13xx-conf
+# Packet Forward Test Tools
 
 ![Continuous Integration](https://github.com/helium/sx13xx-conf/workflows/Continuous%20Integration/badge.svg)
 
-A simple utility for verifying SX130x Configuration Files
+This repository features two utilities:
+* **rf-tester**: connect two gateway to test RF sending and receiving on Uplink channels
+* **sx13xx-confg**: analyze `global_conf.json` files and verify their compatability with Helium's regional 
+configurations

@@ -1,0 +1,20 @@
+[package]
+name = "rf-tester"
+version = "0.1.1-alpha.0"
+authors = ["Louis Thiery <thiery.louis@gmail.com>"]
+edition = "2018"
+
+description = "A utility for verifying SX13xx Configuration Files"
+readme = "README.md"
+keywords = ["semtech", "lora", "helium"]
+license = "Apache-2.0"
+
+[dependencies]
+semtech-udp = { version = "0.4.1", features = ["server"]}
+regions = { path = "../regions" }
+structopt = { version = "0.3.2", default-features = false }
+base64 = "0.12"
+futures = "0.3"
+[dependencies.tokio]
+version = "0.2"
+features = ["tcp", "udp", "rt-threaded", "macros", "sync", "time"]
