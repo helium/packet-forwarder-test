@@ -34,9 +34,6 @@ impl Config {
         }
     }
 
-    // it is common for these JSON files to have comments in them
-    // which shouldn't normally happen
-    // so this helper function "cleans it up" before feeding it to serde_json
     pub fn from_file(mut file: File) -> Result<Config, Box<dyn std::error::Error>> {
         let mut contents = String::new();
         file.read_to_string(&mut contents)?;
