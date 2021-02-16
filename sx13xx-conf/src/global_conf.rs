@@ -188,20 +188,18 @@ struct ChannelEnabled {
 
 impl Channel {
     fn frequency(&self, radio_0: &Radio, radio_1: &Radio) -> Option<isize> {
-        match self.enable {
-            true => {
-                if let Some(config) = &self.config {
-                    Some(match config.radio {
-                        0 => radio_0.freq + config.r#if,
-                        1 => radio_1.freq + config.r#if,
-                        _ => panic!("invalid radio!"),
-                    })
-                } else {
-                    panic!("LoRa Channel enabled but no 'radio' and/or no 'if'")
-                }
-            }
-            false => None,
+        if !self.enable {
+            return None;
         }
+        let &ChannelEnabled { r#if, radio } = self
+            .config
+            .as_ref()
+            .expect("LoRa Channel enabled but no 'radio' and/or no 'if'");
+        Some(match radio {
+            0 => radio_0.freq + r#if,
+            1 => radio_1.freq + r#if,
+            _ => panic!("invalid radio!"),
+        })
     }
 
     fn summary(&self, radio_0: &Radio, radio_1: &Radio) -> String {
