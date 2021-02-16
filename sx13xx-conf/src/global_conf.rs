@@ -1,6 +1,6 @@
 use super::File;
 use serde::{Deserialize, Serialize};
-use std::io::{prelude::*, BufReader};
+use std::io::prelude::*;
 
 // Top level struct allows for the "gateway_conf" field to exist
 // without getting in the way of the flexible parsing of
@@ -37,28 +37,53 @@ impl Config {
     // it is common for these JSON files to have comments in them
     // which shouldn't normally happen
     // so this helper function "cleans it up" before feeding it to serde_json
-    pub fn from_file(file: File) -> Result<Config, Box<dyn std::error::Error>> {
-        let reader = BufReader::new(file);
-
+    pub fn from_file(mut file: File) -> Result<Config, Box<dyn std::error::Error>> {
         let mut contents = String::new();
-        for line_result in reader.lines() {
-            // remove whitespace
-            let line = line_result?.replace(' ', "");
-
-            // remove any comments
-            // this logic works for whole line of end of line
-            for s in line.split("/*") {
-                if !s.ends_with("*/") {
-                    contents.push_str(&s);
-                    contents.push('\n');
-                }
-            }
-        }
-
-        //println!("{}", contents);
-        let config = serde_json::from_str(&contents)?;
+        file.read_to_string(&mut contents)?;
+        let decommented_content = decomment(&contents);
+        let config = serde_json::from_str(&decommented_content)?;
         Ok(config)
     }
+}
+
+/// Removes both c-style block comments and c++-style line comments from a str.
+pub fn decomment(src: &str) -> String {
+    let mut in_line_comment = false;
+    let mut in_block_comment = false;
+    let mut decommented = String::with_capacity(src.len());
+    let mut itr = src.chars().peekable();
+    while let Some(ch) = itr.next() {
+        match (ch, itr.peek()) {
+            ('/', Some('*')) => {
+                assert!(!in_line_comment);
+                assert!(!in_block_comment);
+                let _ = itr.next();
+                in_block_comment = true;
+            }
+            ('*', Some('/')) => {
+                assert!(in_block_comment);
+                let _ = itr.next();
+                in_block_comment = false;
+            }
+            ('/', Some('/')) => {
+                assert!(!in_line_comment);
+                assert!(!in_block_comment);
+                let _ = itr.next();
+                in_line_comment = true;
+            }
+            ('\r', Some('\n')) if in_line_comment => {
+                let _ = itr.next();
+                in_line_comment = false;
+            }
+            ('\n', _) if in_line_comment => {
+                in_line_comment = false;
+            }
+            _ if in_block_comment || in_line_comment || ch.is_whitespace() => (),
+            _ => decommented.push(ch),
+        }
+    }
+    assert!(!in_block_comment);
+    decommented
 }
 
 #[derive(Deserialize, Serialize, Debug)]
