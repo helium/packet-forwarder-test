@@ -4,7 +4,6 @@ version = "0.1.1"
 authors = ["Louis Thiery <thiery.louis@gmail.com>"]
 edition = "2018"
 
-readme = "README.md"
 keywords = ["semtech", "lora", "helium"]
 license = "Apache-2.0"
 
