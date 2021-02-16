@@ -3,6 +3,7 @@ name = "sx13xx-conf"
 version = "0.1.1"
 authors = ["Louis Thiery <thiery.louis@gmail.com>"]
 edition = "2018"
+publish = false
 
 description = "A utility for verifying SX13xx Configuration Files"
 readme = "README.md"
