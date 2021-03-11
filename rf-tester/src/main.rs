@@ -26,6 +26,8 @@ async fn start_server(
     role: Role,
     port: u16,
     mut sender: mpsc::Sender<Message>,
+    debug: bool,
+    label: &'static str,
 ) -> Result<(oneshot::Receiver<MacAddress>, ClientTx), Box<dyn std::error::Error>> {
     let test_addr = SocketAddr::from(([0, 0, 0, 0], port));
     println!("Starting server: {}", test_addr);
@@ -65,7 +67,11 @@ async fn start_server(
                 Event::NoClientWithMac(_packet, mac) => {
                     println!("Tried to send to client with unknown MAC: {:?}", mac)
                 }
-                Event::RawPacket(_) => (),
+                Event::RawPacket(packet) => {
+                    (if debug {
+                        println!("{}: {:?}", label, packet);
+                    })
+                }
             }
         }
     });
@@ -79,10 +85,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (packet_tx, mut packet_rx): (mpsc::Sender<Message>, mpsc::Receiver<Message>) =
         mpsc::channel(120);
 
-    let (test_mac, mut test_tx) =
-        start_server(Role::Tested, cli.test_port, packet_tx.clone()).await?;
-    let (control_mac, mut control_tx) =
-        start_server(Role::Control, cli.control_port, packet_tx).await?;
+    let (test_mac, mut test_tx) = start_server(
+        Role::Tested,
+        cli.test_port,
+        packet_tx.clone(),
+        cli.debug,
+        "Test",
+    )
+    .await?;
+    let (control_mac, mut control_tx) = start_server(
+        Role::Control,
+        cli.control_port,
+        packet_tx,
+        cli.debug,
+        "Control",
+    )
+    .await?;
 
     println!("Blocking until both clients connect");
     let (test_mac, control_mac) = join!(test_mac, control_mac);
@@ -201,4 +219,7 @@ pub struct Opt {
 
     #[structopt(long, short)]
     region: Region,
+
+    #[structopt(long, short)]
+    debug: bool,
 }
