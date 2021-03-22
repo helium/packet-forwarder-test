@@ -26,6 +26,8 @@ async fn start_server(
     role: Role,
     port: u16,
     mut sender: mpsc::Sender<Message>,
+    debug: bool,
+    label: &'static str,
 ) -> Result<(oneshot::Receiver<MacAddress>, ClientTx), Box<dyn std::error::Error>> {
     let test_addr = SocketAddr::from(([0, 0, 0, 0], port));
     println!("Starting server: {}", test_addr);
@@ -65,7 +67,11 @@ async fn start_server(
                 Event::NoClientWithMac(_packet, mac) => {
                     println!("Tried to send to client with unknown MAC: {:?}", mac)
                 }
-                Event::RawPacket(_) => (),
+                Event::RawPacket(packet) => {
+                    if debug {
+                        println!("{}: {:?}", label, packet);
+                    }
+                }
             }
         }
     });
@@ -79,10 +85,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (packet_tx, mut packet_rx): (mpsc::Sender<Message>, mpsc::Receiver<Message>) =
         mpsc::channel(120);
 
-    let (test_mac, mut test_tx) =
-        start_server(Role::Tested, cli.test_port, packet_tx.clone()).await?;
-    let (control_mac, mut control_tx) =
-        start_server(Role::Control, cli.control_port, packet_tx).await?;
+    let (test_mac, mut test_tx) = start_server(
+        Role::Tested,
+        cli.test_port,
+        packet_tx.clone(),
+        cli.debug,
+        "Test",
+    )
+    .await?;
+    let (control_mac, mut control_tx) = start_server(
+        Role::Control,
+        cli.control_port,
+        packet_tx,
+        cli.debug,
+        "Control",
+    )
+    .await?;
 
     println!("Blocking until both clients connect");
     let (test_mac, control_mac) = join!(test_mac, control_mac);
@@ -96,6 +114,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         &mut packet_rx,
         &test_mac,
         &control_mac,
+        cli.power,
     )
     .await?;
     println!("Testing ability of Test Gateway to Receive on Uplink Channels");
@@ -106,6 +125,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         &mut packet_rx,
         &control_mac,
         &test_mac,
+        cli.power,
     )
     .await?;
 
@@ -119,6 +139,7 @@ async fn run_test(
     receiver: &mut mpsc::Receiver<Message>,
     test_mac: &MacAddress,
     control_mac: &MacAddress,
+    power: u64,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let channels = region.get_uplink_frequencies();
 
@@ -129,7 +150,7 @@ async fn run_test(
             index + 1,
             channel
         );
-        let txpk = create_packet(channel, "SF12BW125");
+        let txpk = create_packet(channel, "SF12BW125", power);
 
         let prepared_send = test_tx.prepare_downlink(Some(txpk.clone()), *test_mac);
         if let Err(e) = prepared_send.dispatch(Some(Duration::from_secs(5))).await {
@@ -162,7 +183,7 @@ async fn run_test(
     Ok(())
 }
 
-fn create_packet(channel: &usize, datr: &str) -> pull_resp::TxPk {
+fn create_packet(channel: &usize, datr: &str, power: u64) -> pull_resp::TxPk {
     let buffer = vec![0; 32];
     let size = buffer.len() as u64;
     let data = base64::encode(buffer);
@@ -174,7 +195,7 @@ fn create_packet(channel: &usize, datr: &str) -> pull_resp::TxPk {
         tmst,
         freq,
         rfch: 0,
-        powe: 12, //cli.power as u64,
+        powe: power,
         modu: "LORA".into(),
         datr: datr.into(),
         codr: "4/5".into(),
@@ -199,6 +220,15 @@ pub struct Opt {
     #[structopt(long, default_value = "1681")]
     control_port: u16,
 
+    /// which region to use for the RF test (eg: EU868, US915...)
     #[structopt(long, short)]
     region: Region,
+
+    /// output all UDP frames received from both control and test gateways
+    #[structopt(long, short)]
+    debug: bool,
+
+    /// transmit power. allowable range, 12-28
+    #[structopt(long, default_value = "12")]
+    power: u64,
 }
