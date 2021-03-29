@@ -13,7 +13,7 @@ pub struct Config {
 
 // This enum allows Sx1301/Sx1302 files to be parsed flexibly
 #[derive(Deserialize, Serialize)]
-#[allow(non_camel_case_types)]
+#[allow(non_camel_case_types, clippy::upper_case_acronyms)]
 enum Sx130xConf {
     SX130x_conf(Sx130xConfData),
     SX1301_conf(Sx130xConfData),
@@ -97,7 +97,7 @@ struct Sx130xConfData {
     chan_multiSF_6: Channel,
     chan_multiSF_7: Channel,
     chan_Lora_std: LoraStd,
-    chan_FSK: ChannelFSK,
+    chan_FSK: ChannelFsk,
 }
 
 impl Sx130xConfData {
@@ -152,7 +152,6 @@ impl Sx130xConfData {
         if let (Some(lb), Some(ub)) = (self.radio_0.tx_freq_min, self.radio_0.tx_freq_max) {
             for frequency in frequencies {
                 if frequency > ub || frequency < lb {
-                    println!("{} > {} || {} < {}", frequency, ub, frequency, lb);
                     valid_tx = false;
                 }
             }
@@ -295,13 +294,13 @@ struct LoraStdEnabled {
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-struct ChannelFSK {
+struct ChannelFsk {
     enable: bool,
     #[serde(flatten)]
     config: Option<LoraStdEnabled>,
 }
 
-impl ChannelFSK {
+impl ChannelFsk {
     fn frequency(&self, radio_0: &Radio, radio_1: &Radio) -> Option<isize> {
         match self.enable {
             true => {

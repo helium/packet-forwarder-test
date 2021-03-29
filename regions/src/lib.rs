@@ -1,7 +1,7 @@
 use strum_macros::EnumString;
 
 #[derive(Debug, EnumString)]
-#[allow(non_camel_case_types)]
+#[allow(clippy::upper_case_acronyms)]
 pub enum Region {
     EU868,
     US915,
