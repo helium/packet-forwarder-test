@@ -152,6 +152,7 @@ impl Sx130xConfData {
         if let (Some(lb), Some(ub)) = (self.radio_0.tx_freq_min, self.radio_0.tx_freq_max) {
             for frequency in frequencies {
                 if frequency > ub || frequency < lb {
+                    println!("{} > {} || {} < {}", frequency, ub, frequency, lb);
                     valid_tx = false;
                 }
             }
