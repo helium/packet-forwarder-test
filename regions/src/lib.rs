@@ -6,8 +6,9 @@ pub enum Region {
     EU868,
     US915,
     CN470,
-    AS923_A1,
-    AS923_A2,
+    AS923_1,
+    AS923_2,
+    AS923_3,
 }
 
 impl Region {
@@ -16,8 +17,9 @@ impl Region {
             Region::EU868 => &EU868_UPLINK_FREQUENCIES,
             Region::US915 => &US915_UPLINK_FREQUENCIES,
             Region::CN470 => &CN470_UPLINK_FREQUENCIES,
-            Region::AS923_A1 => &AS923_A1_UPLINK_FREQUENCIES,
-            Region::AS923_A2 => &AS923_A2_UPLINK_FREQUENCIES,
+            Region::AS923_1 => &AS923_1_UPLINK_FREQUENCIES,
+            Region::AS923_2 => &AS923_2_UPLINK_FREQUENCIES,
+            Region::AS923_3 => &AS923_3_UPLINK_FREQUENCIES,
         }
     }
 }
@@ -55,19 +57,7 @@ pub const CN470_UPLINK_FREQUENCIES: [usize; 8] = [
     487_700_000,
 ];
 
-pub const AS923_A1_UPLINK_FREQUENCIES: [usize; 9] = [
-    923_200_000,
-    923_400_000,
-    922_200_000,
-    922_400_000,
-    922_600_000,
-    922_800_000,
-    923_000_000,
-    922_000_000,
-    922_100_000,
-];
-
-pub const AS923_A2_UPLINK_FREQUENCIES: [usize; 9] = [
+pub const AS923_1_UPLINK_FREQUENCIES: [usize; 9] = [
     923_200_000,
     923_400_000,
     923_600_000,
@@ -76,5 +66,29 @@ pub const AS923_A2_UPLINK_FREQUENCIES: [usize; 9] = [
     924_200_000,
     924_400_000,
     924_600_000,
-    924_500_000,
+    924_800_000,
+];
+
+pub const AS923_2_UPLINK_FREQUENCIES: [usize; 9] = [
+    921_400_000,
+    921_600_000,
+    921_800_000,
+    922_000_000,
+    922_200_000,
+    922_400_000,
+    922_600_000,
+    922_800_000,
+    923_000_000,
+];
+
+pub const AS923_3_UPLINK_FREQUENCIES: [usize; 9] = [
+    916_600_000,
+    916_800_000,
+    917_000_000,
+    917_200_000,
+    917_400_000,
+    917_600_000,
+    917_800_000,
+    918_000_000,
+    918_200_000,
 ];
