@@ -57,7 +57,7 @@ pub const CN470_UPLINK_FREQUENCIES: [usize; 8] = [
     487_700_000,
 ];
 
-pub const AS923_1_UPLINK_FREQUENCIES: [usize; 9] = [
+pub const AS923_1_UPLINK_FREQUENCIES: [usize; 8] = [
     923_200_000,
     923_400_000,
     923_600_000,
@@ -66,10 +66,9 @@ pub const AS923_1_UPLINK_FREQUENCIES: [usize; 9] = [
     924_200_000,
     924_400_000,
     924_600_000,
-    924_800_000,
 ];
 
-pub const AS923_2_UPLINK_FREQUENCIES: [usize; 9] = [
+pub const AS923_2_UPLINK_FREQUENCIES: [usize; 8] = [
     921_400_000,
     921_600_000,
     921_800_000,
@@ -78,10 +77,9 @@ pub const AS923_2_UPLINK_FREQUENCIES: [usize; 9] = [
     922_400_000,
     922_600_000,
     922_800_000,
-    923_000_000,
 ];
 
-pub const AS923_3_UPLINK_FREQUENCIES: [usize; 9] = [
+pub const AS923_3_UPLINK_FREQUENCIES: [usize; 8] = [
     916_600_000,
     916_800_000,
     917_000_000,
@@ -90,5 +88,4 @@ pub const AS923_3_UPLINK_FREQUENCIES: [usize; 9] = [
     917_600_000,
     917_800_000,
     918_000_000,
-    918_200_000,
 ];
