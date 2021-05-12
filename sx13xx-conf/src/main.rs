@@ -46,16 +46,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 );
             }
         }
-    } else if path.is_dir() {
-        for entry in path.read_dir().expect("read_dir call failed") {
-            if let Ok(entry) = entry {
-                let file = File::open(&entry.path())?;
-                println!("{:?}", file);
-                let config = Config::from_file(file)?;
-                println!("{}", config.summary());
-            }
-        }
     }
-
     Ok(())
 }

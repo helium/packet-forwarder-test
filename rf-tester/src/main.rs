@@ -184,7 +184,7 @@ async fn run_test(
 }
 
 fn create_packet(channel: &usize, datr: &str, power: u64) -> pull_resp::TxPk {
-    let buffer = vec![0; 32];
+    let buffer = vec![0; 52];
     let size = buffer.len() as u64;
     let data = base64::encode(buffer);
     let tmst = StringOrNum::N(0);
