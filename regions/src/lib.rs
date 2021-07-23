@@ -36,6 +36,7 @@ impl Region {
             Region::AS923_4 => &AS923_4_UPLINK_FREQUENCIES,
             Region::KR920 => &KR920_UPLINK_FREQUENCIES,
             Region::IN865 => &IN865_UPLINK_FREQUENCIES,
+            Region::RU864 => &RU864_UPLINK_FREQUENCIES,
         }
     }
 }
@@ -144,4 +145,14 @@ pub const KR920_UPLINK_FREQUENCIES: [usize; 7] = [
     922_900_000,
     923_100_000,
     923_300_000,
+];
+
+pub const RU864_UPLINK_FREQUENCIES: [usize; 7] = [
+    864_100_000,
+    864_300_000,
+    864_500_000,
+    864_700_000,
+    864_900_000,
+    868_900_000,
+    869_100_000,
 ];
