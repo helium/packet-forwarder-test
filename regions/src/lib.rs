@@ -9,6 +9,7 @@ pub enum Region {
     AS923_1,
     AS923_2,
     AS923_3,
+    IN865,
 }
 
 impl Region {
@@ -20,6 +21,8 @@ impl Region {
             Region::AS923_1 => &AS923_1_UPLINK_FREQUENCIES,
             Region::AS923_2 => &AS923_2_UPLINK_FREQUENCIES,
             Region::AS923_3 => &AS923_3_UPLINK_FREQUENCIES,
+            Region::IN865 => &IN865_UPLINK_FREQUENCIES,
+
         }
     }
 }
@@ -89,3 +92,10 @@ pub const AS923_3_UPLINK_FREQUENCIES: [usize; 8] = [
     917_800_000,
     918_000_000,
 ];
+
+pub const IN865_UPLINK_FREQUENCIES: [usize; 3] = [
+    865_062_500,
+    865_402_500,
+    865_985_000
+];
+
