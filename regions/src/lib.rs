@@ -1,5 +1,8 @@
 use strum_macros::EnumString;
 
+/// These are all derived from definitions in
+/// https://github.com/helium/miner/blob/master/config/sys.config
+
 #[derive(Debug, EnumString)]
 #[allow(clippy::upper_case_acronyms)]
 pub enum Region {
@@ -15,6 +18,7 @@ pub enum Region {
     AS923_4,
     KR920,
     IN865,
+    RU864,
 }
 
 impl Region {
