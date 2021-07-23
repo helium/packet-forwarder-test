@@ -48,10 +48,30 @@ impl Config {
 pub fn decomment(src: &str) -> String {
     let mut in_line_comment = false;
     let mut in_block_comment = false;
+    let mut variable = false;
     let mut decommented = String::with_capacity(src.len());
     let mut itr = src.chars().peekable();
     while let Some(ch) = itr.next() {
         match (ch, itr.peek()) {
+            ('$', Some('{')) => {
+                assert!(!in_line_comment);
+                assert!(!in_block_comment);
+                let _ = itr.next();
+                variable = true;
+            }
+            (_, Some('}')) => {
+                if variable {
+                    assert!(!in_line_comment);
+                    assert!(!in_block_comment);
+                    decommented.push_str("\"\"");
+                    let _ = itr.next();
+                    variable = false;
+                } else {
+                    if !in_block_comment && !in_line_comment  && !ch.is_whitespace() {
+                        decommented.push(ch)
+                    }
+                }
+            }
             ('/', Some('*')) => {
                 assert!(!in_line_comment);
                 assert!(!in_block_comment);
@@ -76,7 +96,7 @@ pub fn decomment(src: &str) -> String {
             ('\n', _) if in_line_comment => {
                 in_line_comment = false;
             }
-            _ if in_block_comment || in_line_comment => (),
+            _ if in_block_comment || in_line_comment || variable => (),
             _ => decommented.push(ch),
         }
     }
