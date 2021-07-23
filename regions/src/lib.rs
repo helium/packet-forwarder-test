@@ -7,6 +7,7 @@ pub enum Region {
     EU868,
     EU433,
     CN470,
+    CN779,
     AS923_1,
     AS923_2,
     AS923_3,
@@ -20,6 +21,7 @@ impl Region {
             Region::EU868 => &EU868_UPLINK_FREQUENCIES,
             Region::EU433 => &EU433_UPLINK_FREQUENCIES,
             Region::CN470 => &CN470_UPLINK_FREQUENCIES,
+            Region::CN779 => &CN779_UPLINK_FREQUENCIES,
             Region::AS923_1 => &AS923_1_UPLINK_FREQUENCIES,
             Region::AS923_2 => &AS923_2_UPLINK_FREQUENCIES,
             Region::AS923_3 => &AS923_3_UPLINK_FREQUENCIES,
@@ -67,6 +69,12 @@ pub const CN470_UPLINK_FREQUENCIES: [usize; 8] = [
     487_300_000,
     487_500_000,
     487_700_000,
+];
+
+pub const CN779_UPLINK_FREQUENCIES: [usize; 3] = [
+    779_500_000,
+    779_700_000,
+    779_900_000,
 ];
 
 pub const AS923_1_UPLINK_FREQUENCIES: [usize; 8] = [
