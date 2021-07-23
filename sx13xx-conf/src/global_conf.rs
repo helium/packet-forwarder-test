@@ -38,6 +38,7 @@ impl Config {
         let mut contents = String::new();
         file.read_to_string(&mut contents)?;
         let decommented_content = decomment(&contents);
+        println!("{}", decommented_content);
         let config = serde_json::from_str(&decommented_content)?;
         Ok(config)
     }
@@ -75,7 +76,7 @@ pub fn decomment(src: &str) -> String {
             ('\n', _) if in_line_comment => {
                 in_line_comment = false;
             }
-            _ if in_block_comment || in_line_comment || ch.is_whitespace() => (),
+            _ if in_block_comment || in_line_comment => (),
             _ => decommented.push(ch),
         }
     }
