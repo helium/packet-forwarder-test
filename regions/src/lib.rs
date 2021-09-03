@@ -61,7 +61,7 @@ pub const EU868_UPLINK_FREQUENCIES: [usize; 9] = [
     867_500_000,
     867_700_000,
     867_900_000,
-    868_300_000,
+    868_300_000, // fat channel
 ];
 
 pub const EU433_UPLINK_FREQUENCIES: [usize; 3] = [433_175_000, 433_375_000, 433_575_000];
@@ -84,11 +84,11 @@ pub const AU915_UPLINK_FREQUENCIES: [usize; 9] = [
     917_000_000,
     917_200_000,
     917_400_000,
-    917_500_000,
     917_600_000,
     917_800_000,
     918_000_000,
     918_200_000,
+    917_500_000, // fat channel
 ];
 
 pub const AS923_1_UPLINK_FREQUENCIES: [usize; 8] = [
