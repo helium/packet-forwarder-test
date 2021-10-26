@@ -115,6 +115,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         &test_mac,
         &control_mac,
         cli.power,
+        &cli.datr,
     )
     .await?;
     println!("Testing ability of Test Gateway to Receive on Uplink Channels");
@@ -126,6 +127,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         &control_mac,
         &test_mac,
         cli.power,
+        &cli.datr,
     )
     .await?;
 
@@ -140,6 +142,7 @@ async fn run_test(
     test_mac: &MacAddress,
     control_mac: &MacAddress,
     power: u64,
+    datr: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let channels = region.get_uplink_frequencies();
 
@@ -150,7 +153,7 @@ async fn run_test(
             index + 1,
             channel
         );
-        let txpk = create_packet(channel, "SF12BW125", power);
+        let txpk = create_packet(channel, datr, power);
 
         let prepared_send = test_tx.prepare_downlink(Some(txpk.clone()), *test_mac);
         if let Err(e) = prepared_send.dispatch(Some(Duration::from_secs(5))).await {
@@ -231,4 +234,8 @@ pub struct Opt {
     /// transmit power. allowable range, 12-28
     #[structopt(long, default_value = "12")]
     power: u64,
+
+    /// data rate
+    #[structopt(long, default_value = "SF12BW125")]
+    datr: String,
 }
