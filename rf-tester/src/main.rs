@@ -109,25 +109,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Testing ability of Test Gateway to Transmit on Uplink Channels");
     run_test(
         Role::Control,
-        &cli.region,
+        &cli,
         &mut test_tx,
         &mut packet_rx,
         &test_mac,
         &control_mac,
-        cli.power,
-        &cli.datr,
     )
     .await?;
     println!("Testing ability of Test Gateway to Receive on Uplink Channels");
     run_test(
         Role::Tested,
-        &cli.region,
+        &cli,
         &mut control_tx,
         &mut packet_rx,
         &control_mac,
         &test_mac,
-        cli.power,
-        &cli.datr,
     )
     .await?;
 
@@ -136,24 +132,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 async fn run_test(
     receiver_role: Role,
-    region: &Region,
+    cli_options: &Opt,
     test_tx: &mut ClientTx,
     receiver: &mut mpsc::Receiver<Message>,
     test_mac: &MacAddress,
     control_mac: &MacAddress,
-    power: u64,
-    datr: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let channels = region.get_uplink_frequencies();
+    let power = cli_options.power;
+    let channels = cli_options.region.get_uplink_frequencies();
 
     for (index, channel) in channels.iter().enumerate() {
         println!(
             "\tDispatching on channel ({:?} {}: {} MHz)",
-            region,
+            cli_options.region,
             index + 1,
             channel
         );
-        let txpk = create_packet(channel, datr, power);
+        let txpk = create_packet(channel, &cli_options.datr, power);
 
         let prepared_send = test_tx.prepare_downlink(Some(txpk.clone()), *test_mac);
         if let Err(e) = prepared_send.dispatch(Some(Duration::from_secs(5))).await {
